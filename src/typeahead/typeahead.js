@@ -131,7 +131,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.position', 'ui.bootstrap
           if (onCurrentRequest && hasFocus) {
             if (matches.length > 0) {
 
-              scope.activeIdx = 0;
+              scope.activeIdx = -1;
               scope.matches.length = 0;
 
               //transform labels
@@ -266,32 +266,43 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.position', 'ui.bootstrap
 
       //bind keyboard events: arrows up(38) / down(40), enter(13) and tab(9), esc(27)
       element.bind('keydown', function (evt) {
+        if(scope.activeIdx != -1){
+          //typeahead is open and an "interesting" key was pressed
+          if (scope.matches.length === 0 || HOT_KEYS.indexOf(evt.which) === -1) {
+            return;
+          }
 
-        //typeahead is open and an "interesting" key was pressed
-        if (scope.matches.length === 0 || HOT_KEYS.indexOf(evt.which) === -1) {
-          return;
-        }
+          evt.preventDefault();
 
-        evt.preventDefault();
+          if (evt.which === 40) {
+            scope.activeIdx = (scope.activeIdx + 1) % scope.matches.length;
+            scope.$digest();
 
-        if (evt.which === 40) {
-          scope.activeIdx = (scope.activeIdx + 1) % scope.matches.length;
-          scope.$digest();
+          } else if (evt.which === 38) {
+            scope.activeIdx = (scope.activeIdx ? scope.activeIdx : scope.matches.length) - 1;
+            scope.$digest();
 
-        } else if (evt.which === 38) {
-          scope.activeIdx = (scope.activeIdx ? scope.activeIdx : scope.matches.length) - 1;
-          scope.$digest();
+          } else if (evt.which === 13 || evt.which === 9) {
+            scope.$apply(function () {
+              scope.select(scope.activeIdx);
+            });
 
-        } else if (evt.which === 13 || evt.which === 9) {
-          scope.$apply(function () {
-            scope.select(scope.activeIdx);
-          });
+          } else if (evt.which === 27) {
+            evt.stopPropagation();
 
-        } else if (evt.which === 27) {
-          evt.stopPropagation();
-
-          resetMatches();
-          scope.$digest();
+            resetMatches();
+            scope.$digest();
+          }
+        }else{
+          if(evt.which == 40){
+            scope.$apply(function(){
+              scope.activeIdx +=1;
+            });
+          }else if(evt.which == 9 || evt.which == 13){
+            scope.$apply(function(){
+              scope.matches = [];
+            });
+          }
         }
       });
 
